@@ -1,17 +1,23 @@
 {
-  "name": "testbot",
+  "name": "gmap-bot",
   "version": "1.0.0",
-  "description": "Test fb messenger bot",
+  "description": "Bot to check the traffic ",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/manthosh/fb_bot.git"
+  },
   "author": "Manthosh",
   "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/manthosh/fb_bot/issues"
+  },
+  "homepage": "https://github.com/manthosh/fb_bot#readme",
   "dependencies": {
-    "body-parser": "^1.15.1",
-    "express": "^4.13.4",
-    "request": "^2.72.0"
+    "messenger-bot": "^2.3.0"
   }
 }
