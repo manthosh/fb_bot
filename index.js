@@ -34,12 +34,10 @@ app.post('/webhook', function (req, res) {
     res.sendStatus(200);
 });
 
-var PAGE_ACCESS_TOKEN = "EAAPQ6Dqzcd4BAG6T8dkHrMyStahVlpMKodFEh0r9fgMacqKU6cuBCKCA1RzSvT4jt6SDS3lJZBgkZByKEOfLkI2XrlyzoTZBMw19onfSKNt7Gt43vUE21pTMNDatA6Gg5esdjOWVBMgJ2v8WoPk4LTZA1SZBAP4eam8kGyZBkCZAgZDZD";
-
 function sendMessage(recipientId, message) {
     request({
         url: 'https://graph.facebook.com/v2.6/me/messages',
-        qs: {access_token: PAGE_ACCESS_TOKEN},
+        qs: {access_token: process.env.PAGE_ACCESS_TOKEN},
         method: 'POST',
         json: {
             recipient: {id: recipientId},
