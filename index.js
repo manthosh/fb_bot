@@ -20,7 +20,8 @@ bot.on('message', (payload, reply) => {
         // throw err
     }
     else {
-        reply({ text }, (err) => {
+        text = profile.first_name+"::"+ text ;
+        reply({text}, (err) => {
           if (err) {
             console.log(err);
             // throw err
