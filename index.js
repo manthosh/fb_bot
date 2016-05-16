@@ -26,9 +26,9 @@ bot.on('message', (payload, reply) => {
     else {
         let commands = text.split('/');
         if(commands.length >= 1 && commands[0] === GOTO_COMMAND) {
-            let params = `origins=${commands[1]}&destinations=${commands[2]}&mode=driving&departure_time=now&key=${process.env.GOOGLE_API_TOKEN}`;
-            console.log(`Google url : ${BASE_URI+encodeURIComponent(params)}`);
-            request(BASE_URI+encodeURIComponent(params), function (error, response, body) {
+            let params = `origins=${encodeURIComponent(commands[1])}&destinations=${encodeURIComponent(commands[2])}&mode=driving&departure_time=now&key=${process.env.GOOGLE_API_TOKEN}`;
+            console.log(`Google url : ${BASE_URI+params}`);
+            request(BASE_URI+params, function (error, response, body) {
                   if (!error && response.statusCode == 200) {
                         console.log(`Google response : ${body}`) // Show the HTML for the Google homepage.
                          replyBack(body, profile, reply);  
