@@ -30,32 +30,33 @@ bot.on('message', (payload, reply) => {
             request(encodeURIComponent(url), function (error, response, body) {
                   if (!error && response.statusCode == 200) {
                         console.log(`Google response : ${body}`) // Show the HTML for the Google homepage.
-                        reply({text}, (err) => {
-                            if (err) {
-                                console.log(err);
-                                // throw err
-                            }
-                            else {
-                              console.log(`Echoed back to ${profile.first_name} ${profile.last_name}: ${text}`);
-                            }
-                        });     
+                         replyBack(body, profile, reply);  
+                  }
+                  else {
+                        console.log("Error occured with Google API. ");
+                        console.log(error);
+                        replyBack(`Sorry ${profile.first_name}. I'm having a temporary head ache. Come back later!!`, profile, reply);  
                   }
             })
         }
         else {
             text = "That doesn't ring a bell. Try @goto/<source>/<dest>";
-            reply({text}, (err) => {
-                if (err) {
-                    console.log(err);
-                    // throw err
-                }
-                else {
-                  console.log(`Echoed back to ${profile.first_name} ${profile.last_name}: ${text}`);
-                }
-            });
+            replyBack(text, profile, reply);
         }
     }
   });
 });
+
+var replyBack = function(text, profile, reply) {
+    reply({text}, (err) => {
+        if (err) {
+            console.log(err);
+            // throw err
+        }
+        else {
+          console.log(`Echoed back to ${profile.first_name} ${profile.last_name}: ${text}`);
+        }
+    });
+}
 
 http.createServer(bot.middleware()).listen(process.env.PORT || 3000);
