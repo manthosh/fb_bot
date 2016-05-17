@@ -8,6 +8,8 @@ const bodyParser = require('body-parser')
 const GOTO_COMMAND = "@goto";
 const BASE_URI = "https://maps.googleapis.com/maps/api/distancematrix/json?";
 
+const TRAFFIC_THRESHOLD = 1.25;
+
 let bot = new Bot({
   token: process.env.PAGE_ACCESS_TOKEN,
   verify: 'testbot_verify_token'
@@ -33,7 +35,29 @@ bot.on('message', (payload, reply) => {
             request(BASE_URI+params, function (error, response, body) {
                   if (!error && response.statusCode == 200) {
                         console.log(`Google response : ${body}`)
-                         replyBack(body, profile, reply);  
+
+                        let googleResponse = JSON.parse(body);
+
+                        if(googleResponse.status === "OK") {
+                            let route = googleResponse.rows[0].elements[0];
+
+                            let normalTime = route.duration.value;
+                            let trafficTime = route.duration_in_traffic.value;
+                            let text = `The normal time taken for traveling from ${googleResponse.origin_addresses[0]} to ${googleResponse.destination_addresses[0]} is ${route.duration.text}. With the current traffic it might take ${route.duration_in_traffic.text} and `;
+
+                            if((trafficTime/normalTime) <= TRAFFIC_THRESHOLD) {
+                                text += "so it's ideal to start now.";
+                            }
+                            else {
+                                text += "so it's better to start after a while.";
+                            }
+                            replyBack(text, profile, reply);
+                        }
+                        else {
+                            console.log("Error occured with Google API. ");
+                            console.log(body);
+                            replyBack(`Sorry ${profile.first_name}. I'm having a temporary head ache. Come back later!!`, profile, reply);      
+                        }
                   }
                   else {
                         console.log("Error occured with Google API. ");
