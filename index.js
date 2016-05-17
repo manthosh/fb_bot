@@ -2,6 +2,8 @@
 const http = require('http');
 const request = require('request');
 const Bot = require('messenger-bot');
+const express = require('express')
+const bodyParser = require('body-parser')
 
 const GOTO_COMMAND = "@goto";
 const BASE_URI = "https://maps.googleapis.com/maps/api/distancematrix/json?";
@@ -30,7 +32,7 @@ bot.on('message', (payload, reply) => {
             console.log(`Google url : ${BASE_URI+params}`);
             request(BASE_URI+params, function (error, response, body) {
                   if (!error && response.statusCode == 200) {
-                        console.log(`Google response : ${body}`) // Show the HTML for the Google homepage.
+                        console.log(`Google response : ${body}`)
                          replyBack(body, profile, reply);  
                   }
                   else {
@@ -60,4 +62,26 @@ var replyBack = function(text, profile, reply) {
     });
 }
 
-http.createServer(bot.middleware()).listen(process.env.PORT || 3000);
+//http.createServer(bot.middleware()).listen(process.env.PORT || 3000);
+
+let app = express()
+
+app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({
+  extended: true
+}))
+
+app.get('/', (req, res) => {
+  return bot._verify(req, res)
+})
+
+app.post('/', (req, res) => {
+  bot._handleMessage(req.body)
+  res.end(JSON.stringify({status: 'ok'}))
+})
+
+app.get('/_status', (req, res) => {
+    return res.end(JSON.stringify({status: 'ok'}));
+})
+
+http.createServer(app).listen(process.env.PORT || 3000)
