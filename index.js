@@ -84,4 +84,20 @@ app.get('/_status', (req, res) => {
     return res.end(JSON.stringify({status: 'ok'}));
 })
 
+app.get('/_getlongtoken', (req, res) => {
+    let params = `grant_type=fb_exchange_token&client_id=${encodeURIComponent(process.env.APP_ID)}&client_secret=${process.env.APP_SECRET}&fb_exchange_token=${process.env.PAGE_ACCESS_TOKEN}`;
+    console.log("Token URL : "+"https://graph.facebook.com/v2.6/me/oauth/access_token?"+params);
+    request("https://graph.facebook.com/oauth/access_token?"+params, function (error, response, body) {
+        if (!error && response.statusCode == 200) {
+            console.log("test : "+body);
+            return res.end(body);
+        }
+        else {
+            console.log(`Error occured ${error}`);
+            return res.end(`Error occured : ${JSON.stringify(error)}\n${body}`);
+        }
+    });
+    //res.send("Loading...");
+})
+
 http.createServer(app).listen(process.env.PORT || 3000)
