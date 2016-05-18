@@ -68,19 +68,19 @@ bot.on('message', (payload, reply) => {
             text = {"attachment":{"type":"template","payload":{"template_type":"button","text":"Pick an option?","buttons":[{"type":"postback","title":"Cycle","payload":"CYCLE"},{"type":"postback","title":"Driving","payload":"DRIVING"}]}}};
             //replyBack(text, profile, reply);
             request({
-              method: 'POST',
-              uri: 'https://graph.facebook.com/v2.6/me/messages',
-              qs: {
-                access_token: process.env.PAGE_ACCESS_TOKEN
-              },
-              // headers: {
-              //   "Content-Type": "application/json"
-              //   },
-              json: {
-                recipient: { id: payload.sender.id },
-                message: "UM Commando"
-              }
-            }, (err, res, body) => {
+                  method: 'POST',
+                  uri: 'https://graph.facebook.com/v2.6/me/messages',
+                  qs: {
+                    access_token: process.env.PAGE_ACCESS_TOKEN
+                  },
+                  headers: {
+                    "Content-Type": "application/json"
+                    },
+                  json: {
+                    recipient: { id: payload.sender.id },
+                    message: {"text" : "UM Commando"}
+                  }
+                }, (err, res, body) => {
               console.log(err);
               console.log(body);
             })
