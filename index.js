@@ -65,25 +65,29 @@ bot.on('message', (payload, reply) => {
             //             replyBack(`Sorry ${profile.first_name}. I'm having a temporary head ache. Come back later!!`, profile, reply);  
             //       }
             // })
-            text = {"attachment":{"type":"template","payload":{"template_type":"button","text":"Pick an option?","buttons":[{"type":"postback","title":"Cycle","payload":"CYCLE"},{"type":"postback","title":"Driving","payload":"DRIVING"}]}}};
-            //replyBack(text, profile, reply);
-            request({
-                  method: 'POST',
-                  uri: 'https://graph.facebook.com/v2.6/me/messages',
-                  qs: {
-                    access_token: process.env.PAGE_ACCESS_TOKEN
-                  },
-                  headers: {
-                    "Content-Type": "application/json"
-                    },
-                  json: {
-                    recipient: { id: payload.sender.id },
-                    message: {"text" : "UM Commando"}
-                  }
-                }, (err, res, body) => {
-              console.log(err);
-              console.log(body);
-            })
+            text = {
+                "attachment":{
+                    "type":"template",
+                    "payload":{
+                        "template_type":"button",
+                        "text":"Pick an option?",
+                        "buttons":[
+                            {
+                                "type":"postback",
+                                "title":"Cycle",
+                                "payload":"CYCLE" 
+                            },
+                            {
+                                "type":"postback",
+                                "title":"Driving",
+                                "payload":"DRIVING"
+                            }
+                        ]
+                    }
+                }
+            };
+            postBack(text, payload.sender.id, profile);
+            
         }
         else {
             text = "That doesn't ring a bell. Try @goto/<source>/<dest>";
@@ -100,9 +104,36 @@ bot.on('postback', (payload, reply) => {
     });
 })
 
+var postBack = function(message, recipient, profile) {
+    request({
+        method : 'POST',
+        uri: 'https://graph.facebook.com/v2.6/me/messages',
+        qs: {
+            access_token: process.env.PAGE_ACCESS_TOKEN
+        },
+        headers: {
+            "Content-Type": "application/json"
+        },
+        json: {
+            recipient: {id: recipient},
+            message: message
+        }
+    }, (error, response, body) => {
+        if (error) {
+            console.log(`Error occured while sending msg to ${profile.first_name}  ${profile.last_name}: ${message}`);
+            console.log(error);
+            console.log(body);
+        }
+        else {
+            console.log(`Echoed back to ${profile.first_name} ${profile.last_name}: ${message}`);  
+        }
+    })
+}
+
 var replyBack = function(text, profile, reply) {
     reply({text}, (err) => {
         if (err) {
+            console.log(`Error occured while sending msg to ${profile.first_name}  ${profile.last_name}: ${text}`);
             console.log(err);
             console.log(text);
             // throw err
