@@ -75,7 +75,11 @@ bot.on('message', (payload, reply) => {
                             {
                                 "type":"postback",
                                 "title":"Cycle",
-                                "payload":"CYCLE" 
+                                "payload":{
+                                    "type" : "Cycle",
+                                    "source" : commands[1],
+                                    "dest" : commands[2]
+                                }
                             },
                             {
                                 "type":"postback",
@@ -126,6 +130,7 @@ var postBack = function(message, recipient, profile) {
         }
         else {
             console.log(`Echoed back to ${profile.first_name} ${profile.last_name}: ${message}`);  
+            console.log(body);
         }
     })
 }
