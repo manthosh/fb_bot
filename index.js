@@ -75,11 +75,7 @@ bot.on('message', (payload, reply) => {
                             {
                                 "type":"postback",
                                 "title":"Cycle",
-                                "payload":{
-                                    "type" : "Cycle",
-                                    "source" : commands[1],
-                                    "dest" : commands[2]
-                                }
+                                "payload":"CYCLING"
                             },
                             {
                                 "type":"postback",
@@ -91,6 +87,13 @@ bot.on('message', (payload, reply) => {
                 }
             };
             postBack(text, payload.sender.id, profile);
+
+            bot.on('postback', (payload, reply) => {
+                let text = payload.postback.payload;
+                bot.getProfile(payload.sender.id, (err, profile) => {
+                    replyBack(`${commands[1]} to ${commands[2]} via ${text}`, profile, reply);
+                });
+            })
             
         }
         else {
@@ -100,13 +103,6 @@ bot.on('message', (payload, reply) => {
     }
   });
 });
-
-bot.on('postback', (payload, reply) => {
-    let text = payload.postback.payload;
-    bot.getProfile(payload.sender.id, (err, profile) => {
-        replyBack(text, profile, reply);
-    });
-})
 
 var postBack = function(message, recipient, profile) {
     request({
