@@ -7,8 +7,10 @@ const bodyParser = require('body-parser')
 
 const GOTO_COMMAND = "@goto";
 const BASE_URI = "https://maps.googleapis.com/maps/api/distancematrix/json?";
+const DELIMITER = "||";
 
 const TRAFFIC_THRESHOLD = 1.25;
+const MODES = ["driving", "walking", "transit"];
 
 let bot = new Bot({
   token: process.env.PAGE_ACCESS_TOKEN,
@@ -65,36 +67,9 @@ bot.on('message', (payload, reply) => {
             //             replyBack(`Sorry ${profile.first_name}. I'm having a temporary head ache. Come back later!!`, profile, reply);  
             //       }
             // })
-            text = {
-                "attachment":{
-                    "type":"template",
-                    "payload":{
-                        "template_type":"button",
-                        "text":"Pick an option?",
-                        "buttons":[
-                            {
-                                "type":"postback",
-                                "title":"Cycle",
-                                "payload":"CYCLING"
-                            },
-                            {
-                                "type":"postback",
-                                "title":"Driving",
-                                "payload":"DRIVING"
-                            }
-                        ]
-                    }
-                }
-            };
-            postBack(text, payload.sender.id, profile);
-
-            bot.on('postback', (payload, reply) => {
-                let text = payload.postback.payload;
-                bot.getProfile(payload.sender.id, (err, profile) => {
-                    replyBack(`${commands[1]} to ${commands[2]} via ${text}`, profile, reply);
-                });
-            })
-            
+            let postbackText = getPostback(commands[1], commands[2]);
+            console.log(postbackText);
+            postBack(postbackText, payload.sender.id, profile);
         }
         else {
             text = "That doesn't ring a bell. Try @goto/<source>/<dest>";
@@ -103,6 +78,39 @@ bot.on('message', (payload, reply) => {
     }
   });
 });
+
+bot.on('postback', (payload, reply) => {
+    let text = payload.postback.payload;
+    bot.getProfile(payload.sender.id, (err, profile) => {
+        let commands = text.split(DELIMITER);
+        replyBack(`${commands[1]} to ${commands[2]} via ${commands[0]}`, profile, reply);
+    });
+})
+
+var getPostback = function(source, dest) {
+
+    var buttons = [];
+
+    MODES.map(function(mode) {
+        let obj = {
+            "type":"postback",
+            "title":mode,
+            "payload":mode+DELIMITER+source+DELIMITER+dest
+        }
+        buttons.push(obj);
+    });
+
+    return {
+                "attachment":{
+                    "type":"template",
+                    "payload":{
+                        "template_type":"button",
+                        "text":"Pick an option?",
+                        "buttons":buttons
+                    }
+                }
+            };
+}
 
 var postBack = function(message, recipient, profile) {
     request({
