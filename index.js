@@ -68,7 +68,7 @@ var sendDirections = function(source, dest, mode, departure_time, recipient, pro
                     let normalTime = route.duration.value;
                     let text = `The normal time taken for traveling from ${googleResponse.origin_addresses[0]} to ${googleResponse.destination_addresses[0]} via ${mode} is ${route.duration.text}.`; 
 
-                    let button = [ 
+                    let buttons = [ 
                         {
                             "type" : "web_url",
                             //"url" : `https://www.google.com/maps/dir/${googleResponse.origin_addresses[0]}/${googleResponse.destination_addresses[0]}`,
@@ -87,9 +87,17 @@ var sendDirections = function(source, dest, mode, departure_time, recipient, pro
                         else {
                             text += "so it's better to start after a while.";
                         }
+
+                        let laterButton = {
+                            "type" : "postback",
+                            "title" : "Check after half an hour",
+                            "payload" : MODES[0]+DELIMITER+source+DELIMITER+dest+DELIMITER+(departure_time=='now'?Date.now()+1800000:parseInt(departure_time)+1800000)
+                        };
+
+                        buttons.push(laterButton);
                     }
 
-                    postBack(getButtonTemplate(text, button), recipient, profile);
+                    postBack(getButtonTemplate(text, buttons), recipient, profile);
                 }
                 else {
                     console.log("Error occured with Google API. ");
