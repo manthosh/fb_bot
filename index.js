@@ -32,41 +32,6 @@ bot.on('message', (payload, reply) => {
     else {
         let commands = text.split('/');
         if(commands.length >= 1 && commands[0] === GOTO_COMMAND) {
-            // let params = `origins=${encodeURIComponent(commands[1])}&destinations=${encodeURIComponent(commands[2])}&mode=driving&departure_time=now&key=${process.env.GOOGLE_API_TOKEN}`;
-            // console.log(`Google url : ${BASE_URI+params}`);
-            // request(BASE_URI+params, function (error, response, body) {
-            //       if (!error && response.statusCode == 200) {
-            //             console.log(`Google response : ${body}`)
-
-            //             let googleResponse = JSON.parse(body);
-
-            //             if(googleResponse.status === "OK") {
-            //                 let route = googleResponse.rows[0].elements[0];
-
-            //                 let normalTime = route.duration.value;
-            //                 let trafficTime = route.duration_in_traffic.value;
-            //                 let text = `The normal time taken for traveling from ${googleResponse.origin_addresses[0]} to ${googleResponse.destination_addresses[0]} is ${route.duration.text}. With the current traffic it might take ${route.duration_in_traffic.text} and `;
-
-            //                 if((trafficTime/normalTime) <= TRAFFIC_THRESHOLD) {
-            //                     text += "so it's ideal to start now.";
-            //                 }
-            //                 else {
-            //                     text += "so it's better to start after a while.";
-            //                 }
-            //                 replyBack(text, profile, reply);
-            //             }
-            //             else {
-            //                 console.log("Error occured with Google API. ");
-            //                 console.log(body);
-            //                 replyBack(`Sorry ${profile.first_name}. I'm having a temporary head ache. Come back later!!`, profile, reply);      
-            //             }
-            //       }
-            //       else {
-            //             console.log("Error occured with Google API. ");
-            //             console.log(error);
-            //             replyBack(`Sorry ${profile.first_name}. I'm having a temporary head ache. Come back later!!`, profile, reply);  
-            //       }
-            // })
             let postbackText = getPostback(commands[1], commands[2]);
             console.log(postbackText);
             postBack(postbackText, payload.sender.id, profile);
@@ -83,9 +48,52 @@ bot.on('postback', (payload, reply) => {
     let text = payload.postback.payload;
     bot.getProfile(payload.sender.id, (err, profile) => {
         let commands = text.split(DELIMITER);
-        replyBack(`${commands[1]} to ${commands[2]} via ${commands[0]}`, profile, reply);
+        //replyBack(`${commands[1]} to ${commands[2]} via ${commands[0]}`, profile, reply);
+        sendDirections(commands[1], commands[2], commands[0], commands[3], profile, reply);
     });
 })
+
+var sendDirections = function(source, dest, mode, departure_time, profile, reply) {
+    departure_time = departure_time || 'now';
+    let params = `origins=${encodeURIComponent(source)}&destinations=${encodeURIComponent(dest)}&mode=${mode}&departure_time=${departure_time}&key=${process.env.GOOGLE_API_TOKEN}`;
+    console.log(`Google url : ${BASE_URI+params}`);
+    request(BASE_URI+params, function (error, response, body) {
+          if (!error && response.statusCode == 200) {
+                //console.log(`Google response : ${body}`)
+
+                let googleResponse = JSON.parse(body);
+
+                if(googleResponse.status === "OK") {
+                    let route = googleResponse.rows[0].elements[0];
+                    let normalTime = route.duration.value;
+                    let text = `The normal time taken for traveling from ${googleResponse.origin_addresses[0]} to ${googleResponse.destination_addresses[0]} via ${mode} is ${route.duration.text}.`; 
+
+                    if(mode === MODES[0]) {
+                        let trafficTime = route.duration_in_traffic.value;
+                        text += `With the current traffic it might take ${route.duration_in_traffic.text} and `;
+
+                        if((trafficTime/normalTime) <= TRAFFIC_THRESHOLD) {
+                            text += "so it's ideal to start now.";
+                        }
+                        else {
+                            text += "so it's better to start after a while.";
+                        }
+                    }
+                    replyBack(text, profile, reply);
+                }
+                else {
+                    console.log("Error occured with Google API. ");
+                    console.log(body);
+                    replyBack(`Sorry ${profile.first_name}. I'm having a temporary head ache. Come back later!!`, profile, reply);      
+                }
+          }
+          else {
+                console.log("Error occured with Google API. ");
+                console.log(error);
+                replyBack(`Sorry ${profile.first_name}. I'm having a temporary head ache. Come back later!!`, profile, reply);  
+          }
+    })
+}
 
 var getPostback = function(source, dest) {
 
