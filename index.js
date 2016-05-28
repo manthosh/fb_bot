@@ -32,7 +32,7 @@ bot.on('message', (payload, reply) => {
     else {
         let commands = text.split('/');
         if(commands.length >= 1 && commands[0] === GOTO_COMMAND) {
-            let postbackText = getPostback(commands[1], commands[2]);
+            let postbackText = getButtonTemplate("Pick an option?", getModesButtons(commands[1], commands[2]));
             console.log(postbackText);
             postBack(postbackText, payload.sender.id, profile);
         }
@@ -49,11 +49,11 @@ bot.on('postback', (payload, reply) => {
     bot.getProfile(payload.sender.id, (err, profile) => {
         let commands = text.split(DELIMITER);
         //replyBack(`${commands[1]} to ${commands[2]} via ${commands[0]}`, profile, reply);
-        sendDirections(commands[1], commands[2], commands[0], commands[3], profile, reply);
+        sendDirections(commands[1], commands[2], commands[0], commands[3], payload.sender.id, profile, reply);
     });
 })
 
-var sendDirections = function(source, dest, mode, departure_time, profile, reply) {
+var sendDirections = function(source, dest, mode, departure_time, recipient, profile, reply) {
     departure_time = departure_time || 'now';
     let params = `origins=${encodeURIComponent(source)}&destinations=${encodeURIComponent(dest)}&mode=${mode}&departure_time=${departure_time}&key=${process.env.GOOGLE_API_TOKEN}`;
     console.log(`Google url : ${BASE_URI+params}`);
@@ -68,6 +68,15 @@ var sendDirections = function(source, dest, mode, departure_time, profile, reply
                     let normalTime = route.duration.value;
                     let text = `The normal time taken for traveling from ${googleResponse.origin_addresses[0]} to ${googleResponse.destination_addresses[0]} via ${mode} is ${route.duration.text}.`; 
 
+                    let button = [ 
+                        {
+                            "type" : "web_url",
+                            //"url" : `https://www.google.com/maps/dir/${googleResponse.origin_addresses[0]}/${googleResponse.destination_addresses[0]}`,
+                            "url" : `https://maps.google.com?saddr=${googleResponse.origin_addresses[0].replace(' ','+')}&daddr=${googleResponse.destination_addresses[0].replace(' ','+')}`,
+                            "title" : "Open Google Maps"
+                        }
+                    ];
+
                     if(mode === MODES[0]) {
                         let trafficTime = route.duration_in_traffic.value;
                         text += `With the current traffic it might take ${route.duration_in_traffic.text} and `;
@@ -79,7 +88,8 @@ var sendDirections = function(source, dest, mode, departure_time, profile, reply
                             text += "so it's better to start after a while.";
                         }
                     }
-                    replyBack(text, profile, reply);
+
+                    postBack(getButtonTemplate(text, button), recipient, profile);
                 }
                 else {
                     console.log("Error occured with Google API. ");
@@ -95,7 +105,7 @@ var sendDirections = function(source, dest, mode, departure_time, profile, reply
     })
 }
 
-var getPostback = function(source, dest) {
+var getModesButtons = function(source, dest) {
 
     var buttons = [];
 
@@ -108,12 +118,16 @@ var getPostback = function(source, dest) {
         buttons.push(obj);
     });
 
+    return buttons;
+}
+
+var getButtonTemplate = function(title, buttons) {
     return {
                 "attachment":{
                     "type":"template",
                     "payload":{
                         "template_type":"button",
-                        "text":"Pick an option?",
+                        "text":title,
                         "buttons":buttons
                     }
                 }
