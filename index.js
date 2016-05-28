@@ -72,7 +72,7 @@ var sendDirections = function(source, dest, mode, departure_time, recipient, pro
                         {
                             "type" : "web_url",
                             //"url" : `https://www.google.com/maps/dir/${googleResponse.origin_addresses[0]}/${googleResponse.destination_addresses[0]}`,
-                            "url" : `https://maps.google.com?saddr=${googleResponse.origin_addresses[0].replace(' ','+')}&daddr=${googleResponse.destination_addresses[0].replace(' ','+')}`,
+                            "url" : `https://maps.google.com?saddr=${googleResponse.origin_addresses[0].replace(' ','+')}&daddr=${googleResponse.destination_addresses[0].replace(' ','+')}&directionsmode=transit`,
                             "title" : "Open Google Maps"
                         }
                     ];
