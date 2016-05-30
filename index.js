@@ -12,6 +12,8 @@ const DELIMITER = "||";
 const TRAFFIC_THRESHOLD = 1.25;
 const MODES = ["driving", "walking", "transit"];
 
+const GREETINGS = ["hello", "hi", "good morning", "good afternoon", "good evening", "morning", "afternoon", "evening", "hey", "whats up", "sup", "hows it going", "howdy", "well hello", "why hello there", "yo", "greetings", "look who it is", "look what the cat dragged in", "hola"];
+
 let bot = new Bot({
   token: process.env.PAGE_ACCESS_TOKEN,
   verify: 'testbot_verify_token'
@@ -37,8 +39,18 @@ bot.on('message', (payload, reply) => {
             postBack(postbackText, payload.sender.id, profile);
         }
         else {
-            text = "That doesn't ring a bell. Try @goto/<source>/<dest>";
-            replyBack(text, profile, reply);
+            let trimmedString = text.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?'"]/g,"").replace(/\s{2,}/g," ").toLowerCase();
+
+            if(GREETINGS.indexOf(trimmedString) > -1) {
+                text = `Hi ${profile.first_name}`;
+                //replyBack(text, profile, reply);
+                text += "\nTry @goto/<source>/<dest> for getting the time of travel";
+                replyBack(text, profile, reply);
+            }
+            else {
+                text = "That doesn't ring a bell. Try @goto/<source>/<dest>";
+                replyBack(text, profile, reply);
+            }            
         }
     }
   });
