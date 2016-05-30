@@ -4,6 +4,7 @@ const request = require('request');
 const Bot = require('messenger-bot');
 const express = require('express')
 const bodyParser = require('body-parser')
+const moment = require('moment-timezone');
 
 const GOTO_COMMAND = "@goto";
 const BASE_URI = "https://maps.googleapis.com/maps/api/distancematrix/json?";
@@ -94,7 +95,7 @@ var sendDirections = function(source, dest, mode, departure_time, recipient, pro
                         text += `With the current traffic it might take ${route.duration_in_traffic.text} and `;
 
                         if((trafficTime/normalTime) <= TRAFFIC_THRESHOLD) {
-                            text += "so it's ideal to start now.";
+                            text += `so it's ideal to start ${departure_time=='now'?departure_time:moment().tz(parseInt(departure_time)).format()}.`;
                         }
                         else {
                             text += "so it's better to start after a while.";
