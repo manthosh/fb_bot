@@ -4,7 +4,7 @@ const request = require('request');
 const Bot = require('messenger-bot');
 const express = require('express')
 const bodyParser = require('body-parser')
-const moment = require('moment-timezone');
+const moment = require('moment');
 
 const GOTO_COMMAND = "@goto";
 const BASE_URI = "https://maps.googleapis.com/maps/api/distancematrix/json?";
@@ -67,8 +67,7 @@ bot.on('postback', (payload, reply) => {
 })
 
 var sendDirections = function(source, dest, mode, departure_time, recipient, profile, reply) {
-    departure_time = departure_time || 'now';
-    let params = `origins=${encodeURIComponent(source)}&destinations=${encodeURIComponent(dest)}&mode=${mode}&departure_time=${departure_time}&key=${process.env.GOOGLE_API_TOKEN}`;
+    let params = `origins=${encodeURIComponent(source)}&destinations=${encodeURIComponent(dest)}&mode=${mode}&departure_time=${departure_time || 'now'}&key=${process.env.GOOGLE_API_TOKEN}`;
     console.log(`Google url : ${BASE_URI+params}`);
     request(BASE_URI+params, function (error, response, body) {
           if (!error && response.statusCode == 200) {
@@ -91,11 +90,19 @@ var sendDirections = function(source, dest, mode, departure_time, recipient, pro
                     ];
 
                     if(mode === MODES[0]) {
+
+                        let departure_time_moment = moment(parseInt(departure_time) || Date.now()).utcOffset(profile.timezone);
+
                         let trafficTime = route.duration_in_traffic.value;
-                        text += `With the current traffic it might take ${route.duration_in_traffic.text} and `;
+                        if(!departure_time) {
+                            text += `With the current traffic, it might take ${route.duration_in_traffic.text} and `;
+                        }
+                        else {
+                            text += `With the expected traffic at ${departure_time_moment.format("HH:mm")}, it might take ${route.duration_in_traffic.text} and `;
+                        }
 
                         if((trafficTime/normalTime) <= TRAFFIC_THRESHOLD) {
-                            text += `so it's ideal to start ${departure_time=='now'?departure_time:moment().tz(parseInt(departure_time)).format()}.`;
+                            text += "so it's ideal to start "+(!departure_time?"now":"at "+departure_time_moment.format("HH:mm"))+".";
                         }
                         else {
                             text += "so it's better to start after a while.";
@@ -104,7 +111,7 @@ var sendDirections = function(source, dest, mode, departure_time, recipient, pro
                         let laterButton = {
                             "type" : "postback",
                             "title" : "Check after half an hour",
-                            "payload" : MODES[0]+DELIMITER+source+DELIMITER+dest+DELIMITER+(departure_time=='now'?Date.now()+1800000:parseInt(departure_time)+1800000)
+                            "payload" : MODES[0]+DELIMITER+source+DELIMITER+dest+DELIMITER+(departure_time_moment.valueOf()+1800000)
                         };
 
                         buttons.push(laterButton);
