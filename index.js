@@ -11,6 +11,7 @@ const BASE_URI = "https://maps.googleapis.com/maps/api/distancematrix/json?";
 const DELIMITER = "||";
 
 const TRAFFIC_THRESHOLD = 1.25;
+const CHECK_AFTER_TIME_IN_MILLI = 1800000;
 const MODES = ["driving", "walking", "transit"];
 
 const GREETINGS = ["hello", "hi", "good morning", "good afternoon", "good evening", "morning", "afternoon", "evening", "hey", "whats up", "sup", "hows it going", "howdy", "well hello", "why hello there", "yo", "greetings", "look who it is", "look what the cat dragged in", "hola"];
@@ -90,7 +91,7 @@ var sendDirections = function(source, dest, mode, departure_time, recipient, pro
                     ];
 
                     if(mode === MODES[0]) {
-
+                        
                         let departure_time_moment = moment(parseInt(departure_time) || Date.now()).utcOffset(profile.timezone);
 
                         let trafficTime = route.duration_in_traffic.value;
@@ -110,8 +111,8 @@ var sendDirections = function(source, dest, mode, departure_time, recipient, pro
 
                         let laterButton = {
                             "type" : "postback",
-                            "title" : "Check after half an hour",
-                            "payload" : MODES[0]+DELIMITER+source+DELIMITER+dest+DELIMITER+(departure_time_moment.valueOf()+1800000)
+                            "title" : "Check after 30 min",
+                            "payload" : MODES[0]+DELIMITER+source+DELIMITER+dest+DELIMITER+(departure_time_moment.valueOf()+CHECK_AFTER_TIME_IN_MILLI)
                         };
 
                         buttons.push(laterButton);
