@@ -67,8 +67,8 @@ bot.on('postback', (payload, reply) => {
     });
 })
 
-var sendDirections = function(source, dest, mode, departure_time, recipient, profile, reply) {
-    let params = `origins=${encodeURIComponent(source)}&destinations=${encodeURIComponent(dest)}&mode=${mode}&departure_time=${departure_time || 'now'}&key=${process.env.GOOGLE_API_TOKEN}`;
+var sendDirections = function(source, destination, mode, departure_time, recipient, profile, reply) {
+    let params = `origins=${encodeURIComponent(source)}&destinations=${encodeURIComponent(destination)}&mode=${mode}&departure_time=${departure_time || 'now'}&key=${process.env.GOOGLE_API_TOKEN}`;
     console.log(`Google url : ${BASE_URI+params}`);
     request(BASE_URI+params, function (error, response, body) {
           if (!error && response.statusCode == 200) {
@@ -76,62 +76,86 @@ var sendDirections = function(source, dest, mode, departure_time, recipient, pro
 
                 let googleResponse = JSON.parse(body);
 
-                if(googleResponse.status === "OK") {
-                    let route = googleResponse.rows[0].elements[0];
-                    let normalTime = route.duration.value;
-                    let text = `The normal time taken for traveling from ${googleResponse.origin_addresses[0]} to ${googleResponse.destination_addresses[0]} via ${mode} is ${route.duration.text}.`; 
+                if(googleResponse.status === "OK" && googleResponse.rows.length > 0) {
 
-                    let buttons = [ 
-                        {
-                            "type" : "web_url",
-                            //"url" : `https://www.google.com/maps/dir/${googleResponse.origin_addresses[0]}/${googleResponse.destination_addresses[0]}`,
-                            "url" : `https://maps.google.com?saddr=${googleResponse.origin_addresses[0].replace(' ','+')}&daddr=${googleResponse.destination_addresses[0].replace(' ','+')}&directionsmode=transit`,
-                            "title" : "Open Google Maps"
-                        }
-                    ];
+                    let googleSrc = googleResponse.origin_addresses[0], googleDest = googleResponse.destination_addresses[0];
 
-                    if(mode === MODES[0]) {
-                        
-                        let departure_time_moment = moment(parseInt(departure_time) || Date.now()).utcOffset(profile.timezone);
-
-                        let trafficTime = route.duration_in_traffic.value;
-                        if(!departure_time) {
-                            text += `With the current traffic, it might take ${route.duration_in_traffic.text} and `;
-                        }
-                        else {
-                            text += `With the expected traffic at ${departure_time_moment.format("HH:mm")}, it might take ${route.duration_in_traffic.text} and `;
-                        }
-
-                        if((trafficTime/normalTime) <= TRAFFIC_THRESHOLD) {
-                            text += "so it's ideal to start "+(!departure_time?"now":"at "+departure_time_moment.format("HH:mm"))+".";
-                        }
-                        else {
-                            text += "so it's better to start after a while.";
-                        }
-
-                        let laterButton = {
-                            "type" : "postback",
-                            "title" : "Check after 30 min",
-                            "payload" : MODES[0]+DELIMITER+source+DELIMITER+dest+DELIMITER+(departure_time_moment.valueOf()+CHECK_AFTER_TIME_IN_MILLI)
-                        };
-
-                        buttons.push(laterButton);
+                    if(googleSrc.trim() == "" ){
+                        replyBack(`Sorry ${profile.first_name}. Google doesn't recognise ${source}. Although it's not right always, I'm not of much help without it!!`, profile, reply);
+                        return;
+                    }
+                    else if (googleDest.trim() == "") {
+                        replyBack(`Sorry ${profile.first_name}. Google doesn't recognise ${destination}. Although it's not right always, I'm not of much help without it!!`, profile, reply);
+                        return;
                     }
 
-                    postBack(getButtonTemplate(text, buttons), recipient, profile);
+                    let route = googleResponse.rows[0].elements[0];
+
+                    if(route.status == "OK") {
+                        let normalTime = route.duration.value;
+                        let text = `The normal time taken for traveling from ${googleSrc} to ${googleDest} via ${mode} is ${route.duration.text}.`; 
+
+                        let buttons = [ 
+                            {
+                                "type" : "web_url",
+                                //"url" : `https://www.google.com/maps/dir/${googleResponse.origin_addresses[0]}/${googleResponse.destination_addresses[0]}`,
+                                "url" : `https://maps.google.com?saddr=${googleSrc.replace(' ','+')}&daddr=${googleDest.replace(' ','+')}`,
+                                "title" : "Open Google Maps"
+                            }
+                        ];
+
+                        if(mode === MODES[0]) {
+
+                            let departure_time_moment = moment(parseInt(departure_time) || Date.now()).utcOffset(profile.timezone);
+
+                            let trafficTime = route.duration_in_traffic.value;
+                            if(!departure_time) {
+                                text += `With the current traffic, it might take ${route.duration_in_traffic.text} and `;
+                            }
+                            else {
+                                text += `With the expected traffic at ${departure_time_moment.format("HH:mm")}, it might take ${route.duration_in_traffic.text} and `;
+                            }
+
+                            if((trafficTime/normalTime) <= TRAFFIC_THRESHOLD) {
+                                text += "so it's ideal to start "+(!departure_time?"now":"at "+departure_time_moment.format("HH:mm"))+".";
+                            }
+                            else {
+                                text += "so it's better to start after a while.";
+                            }
+
+                            let laterButton = {
+                                "type" : "postback",
+                                "title" : "Check after 30 min",
+                                "payload" : MODES[0]+DELIMITER+source+DELIMITER+destination+DELIMITER+(departure_time_moment.valueOf()+CHECK_AFTER_TIME_IN_MILLI)
+                            };
+
+                            buttons.push(laterButton);
+                        }
+
+                        postBack(getButtonTemplate(text, buttons), recipient, profile);
+                    }
+                    else if(route.status == "ZERO_RESULTS") {
+                        replyBack(`Sorry ${profile.first_name}. Google didn't find any route between ${googleSrc} and ${googleDest}. If you are sure Google is wrong, why not try giving more details?\nLike @goto/<place name> <city> <country>/dest`, profile, reply);
+                    }
+                    else {
+                        sendErrorMsg(body, error, profile, reply);
+                    }
                 }
                 else {
-                    console.log("Error occured with Google API. ");
-                    console.log(body);
-                    replyBack(`Sorry ${profile.first_name}. I'm having a temporary head ache. Come back later!!`, profile, reply);      
+                    sendErrorMsg(body, error, profile, reply);
                 }
           }
           else {
-                console.log("Error occured with Google API. ");
-                console.log(error);
-                replyBack(`Sorry ${profile.first_name}. I'm having a temporary head ache. Come back later!!`, profile, reply);  
+                sendErrorMsg(body, error, profile, reply);  
           }
     })
+}
+
+var sendErrorMsg = function(body, error, profile, reply) {
+    console.log("Error occured with Google API. ");
+    console.log(body)
+    console.log(error);
+    replyBack(`Sorry ${profile.first_name}. I'm having a slight head ache. Come back later!!`, profile, reply);
 }
 
 var getModesButtons = function(source, dest) {
