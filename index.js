@@ -15,6 +15,7 @@ const CHECK_AFTER_TIME_IN_MILLI = 1800000;
 const MODES = ["driving", "walking", "transit"];
 
 const GREETINGS = ["hello", "hi", "good morning", "good afternoon", "good evening", "morning", "afternoon", "evening", "hey", "whats up", "sup", "hows it going", "howdy", "well hello", "why hello there", "yo", "greetings", "look who it is", "look what the cat dragged in", "hola"];
+const ThUMBS_UP = "👍";
 
 let bot = new Bot({
   token: process.env.PAGE_ACCESS_TOKEN,
@@ -34,25 +35,32 @@ bot.on('message', (payload, reply) => {
         // throw err
     }
     else {
-        let commands = text.split('/');
-        if(commands.length >= 1 && commands[0] === GOTO_COMMAND) {
-            let postbackText = getButtonTemplate("Pick an option?", getModesButtons(commands[1], commands[2]));
-            console.log(postbackText);
-            postBack(postbackText, payload.sender.id, profile);
+
+        if(!text) {
+            replyBack(ThUMBS_UP, profile, reply);
         }
         else {
-            let trimmedString = text.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?'"]/g,"").replace(/\s{2,}/g," ").toLowerCase();
 
-            if(GREETINGS.indexOf(trimmedString) > -1) {
-                text = `Hi ${profile.first_name}`;
-                //replyBack(text, profile, reply);
-                text += "\nTry @goto/<source>/<dest> for getting the time of travel";
-                replyBack(text, profile, reply);
+            let commands = text.split('/');
+            if(commands.length >= 1 && commands[0] === GOTO_COMMAND) {
+                let postbackText = getButtonTemplate("Pick an option?", getModesButtons(commands[1], commands[2]));
+                console.log(postbackText);
+                postBack(postbackText, payload.sender.id, profile);
             }
             else {
-                text = "That doesn't ring a bell. Try @goto/<source>/<dest>";
-                replyBack(text, profile, reply);
-            }            
+                let trimmedString = text.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?'"]/g,"").replace(/\s{2,}/g," ").toLowerCase();
+
+                if(GREETINGS.indexOf(trimmedString) > -1) {
+                    text = `Hi ${profile.first_name}`;
+                    //replyBack(text, profile, reply);
+                    text += "\nTry @goto/<source>/<dest> for getting the time of travel";
+                    replyBack(text, profile, reply);
+                }
+                else {
+                    text = "That doesn't ring a bell. Try @goto/<source>/<dest>";
+                    replyBack(text, profile, reply);
+                }            
+            }
         }
     }
   });
